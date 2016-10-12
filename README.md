@@ -29,6 +29,7 @@ See [starbucks_visualization.rmd](https://github.com/aannasw/starbucks-leaflet/b
 </a>
 
 ### Individual Locations of US stores further categorized by Licensed Franchisees
+This map contains a subset of the above locations as best categorized into major licensee franchises, for e.g. Target, Safeway, Albertsons etc.
 
 <a href="http://artiannaswamy.com/starbucks-leaflet/maps/station_map_franchise-type.html" target="_blank">
 	<img src="https://github.com/aannasw/starbucks-leaflet/blob/master/images/station_map_franchise-type.png" />
