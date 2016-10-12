@@ -1,0 +1,222 @@
+---
+title: "Starbucks Data on Leaflet"
+author: "Arti Annaswamy"
+date: "10/11/2016"
+output: html_document
+---
+
+# Starbucks location visualization
+
+### Data source: https://opendata.socrata.com/Business/All-Starbucks-Locations-in-the-US/txu4-fsic
+
+### Load up packages
+
+```{r, results='hide'}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(leaflet)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+```
+
+### Read in data
+
+```{r}
+setwd("/Users/Arti/GitHub/starbucks-leaflet")
+sbux <- read.csv("All_Starbucks_Locations_in_the_US.csv", stringsAsFactors = FALSE)
+```
+
+### Feature selection and formatting
+
+```{r}
+glimpse(sbux)
+
+# Rename fields
+sbux <- sbux %>% rename(Features.Products = Features...Products) %>% 
+  rename(Features.Service = Features...Service) %>% 
+  rename(Features.Stations = Features...Stations)
+
+# Create Station category and fill-in blanks
+sbux$Features.Stations[sbux$Features.Stations == ""] <- "Not Drive-Through"
+sbux$Features.Stations <- as.factor(sbux$Features.Stations)
+table(sbux$Features.Stations)
+
+# Create Ownership Type factor
+table(sbux$Ownership.Type)
+sbux$Ownership.Type <- as.factor(sbux$Ownership.Type)
+
+```
+
+### Franchise Type Categorizations
+
+```{r}
+# Explore Licensed locations by franchise type
+sbux$License.Franchise <- NA
+
+# University
+sbux$License.Franchise[grepl("college", tolower(sbux$Name)) | grepl("university", tolower(sbux$Name)) | grepl("campus", tolower(sbux$Name)) | grepl("student", tolower(sbux$Name)) | grepl("library", tolower(sbux$Name)) | grepl("univ", tolower(sbux$Name))] <- "Education"
+
+# Travel Centers, Airports, Conventions
+sbux$License.Franchise[grepl("airport", tolower(sbux$Name)) | grepl("concourse", tolower(sbux$Name)) | grepl("terminal", tolower(sbux$Name)) | grepl("ohare", tolower(sbux$Name)) | grepl("baggage", tolower(sbux$Name)) | grepl("term ", tolower(sbux$Name)) | grepl("security ", tolower(sbux$Name))] <- "Airport"
+
+sbux$License.Franchise[grepl("travel plaza", tolower(sbux$Name)) | grepl("travel oasis", tolower(sbux$Name)) | grepl("travel center", tolower(sbux$Name))] <- "Travel Centers"
+
+sbux$License.Franchise[grepl("convention", tolower(sbux$Name))] <- "Convention Center"
+
+sbux$License.Franchise[grepl("food court", tolower(sbux$Name)) | grepl("food ct", tolower(sbux$Name))] <- "Food Court"
+
+sbux$License.Franchise[grepl("food pyramid", tolower(sbux$Name)) | grepl("food pavilion", tolower(sbux$Name)) | grepl("food store", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+
+# Town Centers, Regional Centers
+sbux$License.Franchise[grepl("town center", tolower(sbux$Name)) | grepl("towne center", tolower(sbux$Name)) | grepl("regional center", tolower(sbux$Name)) | grepl("trade center", tolower(sbux$Name)) | grepl("community center", tolower(sbux$Name)) | grepl("shopping center", tolower(sbux$Name)) | grepl(" center", tolower(sbux$Name)) | grepl(" ctr", tolower(sbux$Name))] <- "Shopping - Misc"
+sbux$License.Franchise[grepl(" city", tolower(sbux$Name)) | grepl(" lobby", tolower(sbux$Name)) | grepl(" courtyard", tolower(sbux$Name)) | grepl(" mall", tolower(sbux$Name))] <- "Shopping - Misc"
+
+# General categories
+sbux$License.Franchise[grepl("hospital", tolower(sbux$Name)) | grepl("medical", tolower(sbux$Name))] <- "Hospital"
+sbux$License.Franchise[grepl("beach", tolower(sbux$Name))] <- "Beach"
+sbux$License.Franchise[grepl("casino", tolower(sbux$Name)) | grepl("harrah", tolower(sbux$Name))] <- "Hotel"
+sbux$License.Franchise[grepl("fort ", tolower(sbux$Name)) | grepl("ft. ", tolower(sbux$Name))] <- "Army Bases"
+
+# Specific Locations
+sbux$License.Franchise[grepl("safeway", tolower(tolower(sbux$Name)))] <- "Supermarket/Grocery - Safeway"
+sbux$License.Franchise[grepl("target", tolower(sbux$Name))] <- "Supermarket/Grocery - Target"
+sbux$License.Franchise[grepl("albertson", tolower(sbux$Name))] <- "Supermarket/Grocery - Albertsons"
+sbux$License.Franchise[grepl("vons", tolower(sbux$Name)) | grepl("von's", tolower(sbux$Name))] <- "Supermarket/Grocery - Vons"
+sbux$License.Franchise[grepl("fred meyer", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("kroger", tolower(sbux$Name))] <- "Supermarket/Grocery - Kroger"
+sbux$License.Franchise[grepl("harris teeter", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("king sooper", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("dominick", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("tom thumb", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("stop", tolower(sbux$Name)) & grepl("shop", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("hy", tolower(sbux$Name)) & grepl("vee", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("farm fresh", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("piggly wiggly", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("qfc", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("bashas", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("city market", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("dillon", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("genuardi", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("ingles", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("martin's", tolower(sbux$Name)) | grepl("martins", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("meijer", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("price cutter", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("randall", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("smith's", tolower(sbux$Name)) | grepl("smiths", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("spartan", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("a&p", tolower(sbux$Name)) | grepl("a & p", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+sbux$License.Franchise[grepl("giant ", tolower(sbux$Name)) | grepl("giant-", tolower(sbux$Name))] <- "Supermarket/Grocery - Misc"
+
+# Shopping
+sbux$License.Franchise[grepl("macy", tolower(sbux$Name))] <- "Shopping - Macy's"
+sbux$License.Franchise[grepl("barnes", tolower(sbux$Name))] <- "Shopping - Barnes & Noble"
+sbux$License.Franchise[grepl("fry", tolower(sbux$Name))] <- "Shopping - Fry's"
+
+# Hotels
+sbux$License.Franchise[grepl("marriott", tolower(sbux$Name)) | grepl("hilton", tolower(sbux$Name)) | grepl("hotel", tolower(sbux$Name)) | grepl("sheraton", tolower(sbux$Name)) | grepl("westin", tolower(sbux$Name)) | grepl("hyatt", tolower(sbux$Name))] <- "Hotel"
+
+sbux$License.Franchise[sbux$Ownership.Type == "Company Owned"] <- "Starbucks-Owned"
+
+sbux$License.Franchise[is.na(sbux$License.Franchise) == TRUE] <- "TBD"
+
+# For quick checks
+
+# sbux$Name[grepl("qfc", tolower(sbux$Name))]
+# table(sbux$License.Franchise)
+
+# Franchises table
+
+franchises <- sbux %>% 
+  group_by(License.Franchise) %>% 
+  summarize(Count = n()) %>% 
+  arrange(desc(Count))
+
+```
+
+### Wordcloud 
+
+```{r}
+
+# Create wordcloud of Starbucks Licensed Store names
+sbuxCorpus <- Corpus(VectorSource(sbux$Name))
+sbuxCorpus <- tm_map(sbuxCorpus, PlainTextDocument)
+sbuxCorpus <- tm_map(sbuxCorpus, removePunctuation)
+sbuxCorpus <- tm_map(sbuxCorpus, removeWords, stopwords('english'))
+wordcloud(sbuxCorpus, max.words = 100, random.order = FALSE)
+
+```
+
+### Mapping with Leaflet
+
+#### Cluster-type map by Drive-Through / Not Drive-Through
+```{r}
+sbux_cluster <- leaflet() %>% 
+  addTiles() %>% 
+  setView(-101.140, 40.497, zoom = 5) %>%
+  addCircleMarkers(data = sbux, lng = ~ Longitude, lat = ~ Latitude, 
+                   radius = 7, 
+                   color = ~ ifelse(Features.Stations == 'Drive-Through', 
+                                    'seagreen', 'purple'),
+                   popup = ~ paste(Name, " - ", Ownership.Type, " (", Features.Stations, ")", sep = ""), 
+                   clusterOptions = markerClusterOptions())
+sbux_cluster
+```
+
+#### Individual locations by Drive-Through / Not Drive-Through
+```{r}
+
+pal_station <- colorFactor(c("seagreen", "goldenrod"), domain = c("Drive-Through", "Not Drive-Through"))
+
+sbux_station <- leaflet() %>% 
+  addTiles() %>% 
+  setView(-101.140, 40.497, zoom = 5) %>%
+  addCircleMarkers(data = sbux, lng = ~ Longitude, lat = ~ Latitude, 
+                   radius = 5, 
+                   color = ~ ifelse(Features.Stations == 'Drive-Through', 
+                                    'seagreen', 'goldenrod'), popup = ~ paste(Name, " - ", Ownership.Type, " (", Features.Stations, ")", sep = "")) %>% addLegend("bottomright", pal = pal_station, values = sbux$Features.Stations, title = "Starbucks Station Type", opacity = 1)
+
+sbux_station
+```
+
+#### Individual locations by Starbucks Owned vs Licensed
+```{r}
+
+pal_ownership <- colorFactor(c("seagreen", "coral"), domain = c("Company Owned", "Licensed"))
+
+sbux_ownership <- leaflet() %>% 
+  addTiles() %>% 
+  setView(-101.140, 40.497, zoom = 5) %>%
+  addCircleMarkers(data = sbux, lng = ~ Longitude, lat = ~ Latitude, 
+                   radius = 5, 
+                   color = ~ ifelse(Ownership.Type == 'Company Owned', 
+                                    'seagreen', 'coral'), popup = ~ paste(Name, "  (", Ownership.Type, ")", sep = "")) %>% addLegend("bottomright", pal = pal_ownership, values = sbux$Ownership.Type, title = "Starbucks Ownership Type", opacity = 1)
+sbux_ownership
+```
+
+#### Individual locations by type of Licensed
+```{r}
+
+sbux_franchise <- leaflet() %>% 
+  addTiles() %>% 
+  setView(-101.140, 40.497, zoom = 5) %>%
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Starbucks-Owned"), group = "Starbucks-Owned", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "seagreen", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Supermarket/Grocery - Target"), group = "Supermarket/Grocery - Target", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "red", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Supermarket/Grocery - Safeway"), group = "Supermarket/Grocery - Safeway", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "blue", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Education"), group = "Education", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "purple", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Supermarket/Grocery - Kroger"), group = "Supermarket/Grocery - Kroger", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "deepskyblue", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Supermarket/Grocery - Albertsons"), group = "Supermarket/Grocery - Albertsons", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "skyblue", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Supermarket/Grocery - Misc"), group = "Supermarket/Grocery - Misc", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "slateblue", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Supermarket/Grocery - Vons"), group = "Supermarket/Grocery - Vons", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "royalblue", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Airport"), group = "Airport", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "chartreuse", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Hotel"), group = "Hotel", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "salmon", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Shopping - Misc"), group = "Shopping - Misc", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "orange", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
+  addLayersControl(
+    overlayGroups = c("Starbucks-Owned", "Supermarket/Grocery - Target", "Supermarket/Grocery - Safeway", "Supermarket/Grocery - Misc", "Education", "Supermarket/Grocery - Kroger", "Supermarket/Grocery - Albertsons", "Supermarket/Grocery - Vons", "Airport", "Hotel", "Shopping - Misc"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
+sbux_franchise
+
+```
