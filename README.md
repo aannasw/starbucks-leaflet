@@ -34,6 +34,5 @@ Click on the images to launch a full-page, interactive map.
 This map contains a subset of the above locations as best categorized into major licensee franchises, for e.g. Target, Safeway, Albertsons etc.
 
 <a href="http://artiannaswamy.com/starbucks-leaflet/maps/station_map_franchise-type.html" target="_blank">
-	<img src="https://github.com/aannasw/starbucks-leaflet/blob/master/images/station_map_franchise-type.png" />
+	<img src="https://github.com/aannasw/starbucks-leaflet/blob/be267baf461708d54076689dc98e44ddf1a2d406/images/station_map_franchise-type.png" />
 </a>
-
