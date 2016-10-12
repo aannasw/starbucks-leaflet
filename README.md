@@ -10,7 +10,7 @@ See [starbucks_visualization.rmd](https://github.com/aannasw/starbucks-leaflet/b
 
 ## Map Visualizations
 
-Click on the images to launch a full-page, interactive map in a new tab.
+Click on the images to launch a full-page, interactive map.
 
 ### Cluster map of US stores categorized by Drive-Through / Not Drive-Through
 
