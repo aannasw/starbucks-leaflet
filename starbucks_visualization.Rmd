@@ -200,7 +200,8 @@ sbux_ownership
 ```{r}
 
 sbux_franchise <- leaflet() %>% 
-  addTiles() %>% 
+  addTiles(group="Default") %>% 
+  addProviderTiles("Esri.WorldGrayCanvas", group="ESRI Gray") %>% 
   setView(-101.140, 40.497, zoom = 5) %>%
   addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Starbucks-Owned"), group = "Starbucks-Owned", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "seagreen", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
   addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Supermarket/Grocery - Target"), group = "Supermarket/Grocery - Target", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "red", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
@@ -214,9 +215,16 @@ sbux_franchise <- leaflet() %>%
   addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Hotel"), group = "Hotel", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "salmon", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
   addCircleMarkers(data = subset(sbux, sbux$License.Franchise == "Shopping - Misc"), group = "Shopping - Misc", lng = ~ Longitude, lat = ~ Latitude, radius = 7, fillOpacity = 0.5, color = "orange", popup = ~ paste(Name, "  (", License.Franchise, ")", sep = "")) %>% 
   addLayersControl(
+    baseGroups = c("Default", "ESRI Gray"),
     overlayGroups = c("Starbucks-Owned", "Supermarket/Grocery - Target", "Supermarket/Grocery - Safeway", "Supermarket/Grocery - Misc", "Education", "Supermarket/Grocery - Kroger", "Supermarket/Grocery - Albertsons", "Supermarket/Grocery - Vons", "Airport", "Hotel", "Shopping - Misc"),
     options = layersControlOptions(collapsed = FALSE)
-  )
+  ) %>% 
+  hideGroup("Starbucks-Owned") %>% 
+  hideGroup("Supermarket/Grocery - Target") %>% 
+  hideGroup("Education") %>% 
+  hideGroup("Airport") %>% 
+  hideGroup("Hotel") %>% 
+  hideGroup("Shopping - Misc")
 
 sbux_franchise
 
