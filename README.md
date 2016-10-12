@@ -12,16 +12,16 @@ See [starbucks_visualization.rmd](https://github.com/aannasw/starbucks-leaflet/b
 
 ### Cluster map of US stores categorized by Drive-Through / Not Drive-Through
 
-<iframe width="700" height="500" src="http://artiannaswamy.com/starbucks-leaflet/cluster_map_drive-through.html"></iframe>
+<iframe width="700" height="500" src="http://artiannaswamy.com/starbucks-leaflet/maps/cluster_map_drive-through.html"></iframe>
 
 ### Individual Locations of US stores categorized by Drive-Through / Not Drive-Through
 
-<iframe width="700" height="500" src="http://artiannaswamy.com/starbucks-leaflet/station_map_drive-through.html"></iframe>
+<iframe width="700" height="500" src="http://artiannaswamy.com/starbucks-leaflet/maps/station_map_drive-through.html"></iframe>
 
 ### Individual Locations of US stores categorized by Company-Owned / Licensed
 
-<iframe width="700" height="500" src="http://artiannaswamy.com/starbucks-leaflet/station_map_ownership-type.html"></iframe>
+<iframe width="700" height="500" src="http://artiannaswamy.com/starbucks-leaflet/maps/station_map_ownership-type.html"></iframe>
 
 ### Individual Locations of US stores further categorized by Licensed Franchisees
 
-<iframe width="700" height="500" src="http://artiannaswamy.com/station_map_franchise-type.html"></iframe>
+<iframe width="700" height="500" src="http://artiannaswamy.com/maps/station_map_franchise-type.html"></iframe>
