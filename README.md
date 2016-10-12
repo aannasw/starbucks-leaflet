@@ -12,7 +12,7 @@ See [starbucks_visualization.rmd](https://github.com/aannasw/starbucks-leaflet/b
 
 ### Cluster map of US stores categorized by Drive-Through / Not Drive-Through
 
-<iframe width="700" height="500" src="http://artiannaswamy.com/starbucks-leaflet/maps/cluster_map_drive-through.html"></iframe>
+<a href="http://artiannaswamy.com/starbucks-leaflet/maps/cluster_map_drive-through.html" target="_blank"><img src="images/cluster_map_drive-through"</a>
 
 ### Individual Locations of US stores categorized by Drive-Through / Not Drive-Through
 
